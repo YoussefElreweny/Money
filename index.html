@@ -528,7 +528,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
       const leftTxt = save ? (l < 0 ? `${fmt(-l)} extra` : `${fmt(l)} to go`) : l < 0 ? `${fmt(-l)} over` : `${fmt(l)} left`;
       const items = g.items.map((i) => {
         const iu = usedItem[g.id + '/' + i.id] || 0; const il = i.amount - iu;
-        return `<div class="item"><span class="n">${esc(i.name)}</span><span class="a num"><strong>${il < 0 ? `${fmt(-il)} over` : fmt(il)}</strong> / ${fmt(i.amount)}</span></div>`;
+        return `<div class="item"><span class="n">${esc(i.name)}</span><span class="a num"><strong>${fmt(iu)}</strong> / ${fmt(i.amount)}</span></div>`;
       }).join('');
       return `<div class="cat${openCats.has(g.id) ? ' open' : ''}" data-cat="${g.id}">
         <button>
