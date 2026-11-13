@@ -183,7 +183,14 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 
 /* income tap target + gap note */
 .hero-tap { display: block; width: 100%; text-align: center; border-radius: 20px; padding: 4px 0; }
-.hero-tap:active { background: var(--soft); }
+.hero-tap:active { background: none; }
+.hero-tap:active .big { opacity: .55; }
+.hero-tap .big { transition: opacity .15s; }
+.big.flip { animation: flip .28s cubic-bezier(.2,.8,.2,1); }
+@keyframes flip { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+.sub-link { display: inline-block; padding: 6px 12px; margin-top: -2px; border-radius: 99px; }
+.sub-link:active { background: var(--soft); }
+.sub-link .sub { margin-top: 0; }
 .hero .sub .chev-s { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-left: 2px; }
 .gap-note { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 7px 14px; border-radius: 99px;
   background: var(--soft); color: var(--ink-2); font-size: 13px; font-weight: 500; }
@@ -244,12 +251,14 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 
   <div id="monthView">
   <section class="hero">
-    <button class="hero-tap" id="openIncome" aria-label="Edit income">
+    <button class="hero-tap" id="toggleHide" aria-label="Hide or show income">
       <div class="label">Left this month</div>
       <div class="big num" id="left"></div>
+    </button>
+    <button class="sub-link" id="openIncome" aria-label="Edit income">
       <div class="sub num"><span id="ofSalary"></span><svg class="chev-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
     </button>
-    <button class="gap-note num" id="gapNote" hidden></button>
+    <br><button class="gap-note num" id="gapNote" hidden></button>
     <div class="stack" id="stack"></div>
     <div class="totals">
       <div><div class="k">Spent</div><div class="v num" id="spent"></div></div>
@@ -464,11 +473,14 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     $('eye').querySelector('svg').innerHTML = hidden ? '<path d="M10.6 5.1A10.6 10.6 0 0112 5c6.4 0 10 7 10 7a17.7 17.7 0 01-2.6 3.6M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>' : '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
     $('eye').setAttribute('aria-label', hidden ? 'Show income' : 'Hide income');
   }
-  $('eye').onclick = () => {
+  function toggleHidden() {
     hidden = !hidden;
     try { localStorage.setItem('salary.hidden', hidden ? '1' : '0'); } catch (e) {}
     applyHidden(); render();
-  };
+    const big = $('left'); big.classList.remove('flip'); void big.offsetWidth; big.classList.add('flip');
+  }
+  $('eye').onclick = toggleHidden;
+  $('toggleHide').onclick = toggleHidden;
 
   function render() {
     applyHidden();
