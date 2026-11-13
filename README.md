@@ -13,6 +13,8 @@ root). Then open the URL in Safari → Share → **Add to Home Screen**.
 - **Plan**: categories (Essentials, Lifestyle, Personal Growth, Low-risk and Long-term
   investments by default) with line items. Fully editable from the sliders icon — rename,
   add or remove categories and lines, change colours, mark each as *Spending* or *Saving*.
+  Open it from **Edit plan** next to the Categories heading. A pill under the total turns
+  green while some income is still unplanned and red when the plan is more than your income.
 - **Add expense**: amount, category, line, optional note and date. It comes off that line
   and its category; the home screen shows what's left this month.
 - **Income**: tap the big number. *Every month* sources keep a history (a raise applies

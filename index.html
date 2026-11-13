@@ -212,9 +212,18 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 /* income sheet */
 .hint { font-size: 13px; color: var(--ink-3); margin: -4px 0 8px; }
 .inc-month { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; margin-top: 2px; }
-.plan-vs { font-size: 14px; color: var(--ink-2); margin-top: 6px; text-align: right; }
-.plan-vs.neg { color: var(--red); }
-.plan-vs.ok { color: var(--ink-3); }
+.plan-vs { display: flex; justify-content: flex-end; margin-top: 10px; }
+.plan-vs span { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 99px; font-size: 13px; font-weight: 600; }
+.plan-vs span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.plan-vs.good span { color: #1d8a5a; background: #e9f7ef; }
+.plan-vs.neg span { color: var(--red); background: #fdf0f0; }
+.plan-vs.ok span { color: var(--ink-2); background: var(--soft); }
+.h2row { display: flex; align-items: center; justify-content: space-between; margin: 44px 0 6px; }
+.h2row h2 { margin: 0; }
+.edit-plan { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 11px; border-radius: 99px;
+  background: var(--soft); color: var(--ink); font-size: 14px; font-weight: 600; }
+.edit-plan:active { background: var(--line); }
+.edit-plan svg { width: 16px; height: 16px; }
 
 .toast { position: fixed; left: 50%; bottom: calc(var(--safe-b) + 96px); transform: translate(-50%, 20px); background: var(--ink); color: #fff;
   padding: 10px 18px; border-radius: 99px; font-size: 14px; opacity: 0; transition: .3s; pointer-events: none; z-index: 20; white-space: nowrap; }
@@ -229,10 +238,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
       <span id="monthLabel"></span>
       <button class="icon-btn" id="next" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
-    <div style="display:flex;gap:2px">
     <button class="icon-btn" id="eye" aria-label="Hide income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg></button>
-    <button class="icon-btn" id="openSettings" aria-label="Plan & settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
-    </div>
   </header>
   <div class="mode" id="mode"><button data-mode="month">Month</button><button data-mode="week">Week</button></div>
 
@@ -251,7 +257,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     </div>
   </section>
 
-  <h2>Categories</h2>
+  <div class="h2row"><h2>Categories</h2><button class="edit-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Edit plan</button></div>
   <div id="cats"></div>
 
   <h2>Activity</h2>
@@ -267,7 +273,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
       <div class="days" id="wkDays"></div>
       <div class="legend"><i></i>Steady pace for your plan</div>
     </section>
-    <h2>Spending by category</h2>
+    <div class="h2row"><h2>Spending by category</h2><button class="edit-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Edit plan</button></div>
     <div id="wkCats"></div>
     <h2>Activity</h2>
     <div id="wkActivity"></div>
@@ -753,9 +759,9 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     });
     $('planTotal').textContent = fmt(total) + ' EGP';
     const inc = incomeFor(viewMonth).total, gap = inc - total;
-    $('planVs').className = 'plan-vs num' + (gap < 0 ? ' neg' : gap === 0 ? ' ok' : '');
-    $('planVs').textContent = gap === 0 ? `Matches your ${fmt(inc)} income`
-      : gap > 0 ? `${fmt(gap)} of your ${fmt(inc)} income not planned yet` : `${fmt(-gap)} more than your ${fmt(inc)} income`;
+    $('planVs').className = 'plan-vs num ' + (gap < 0 ? 'neg' : gap === 0 ? 'ok' : 'good');
+    $('planVs').innerHTML = '<span>' + (gap === 0 ? `Every pound of your ${fmt(inc)} income is planned`
+      : gap > 0 ? `${fmt(gap)} of your ${fmt(inc)} income not planned yet` : `Plan is ${fmt(-gap)} over your ${fmt(inc)} income`) + '</span>';
   }
   const txCount = (pred) => state.tx.filter(pred).length;
 
@@ -844,7 +850,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 
   // ── wiring ───────────────────────────────────────────────
   $('openAdd').onclick = () => openAdd(null);
-  $('openSettings').onclick = openSettings;
+  document.querySelectorAll('.edit-plan').forEach((b) => (b.onclick = openSettings));
   const step = (n) => {
     if (mode === 'week') { viewWeek = addDays(viewWeek, 7 * n); viewMonth = monthOf(addDays(viewWeek, 3)); }
     else { viewMonth = shiftMonth(viewMonth, n); }
@@ -906,8 +912,9 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     const t = [...incDraft.rec, ...incDraft.extras].reduce((a, x) => a + (+x.amount || 0), 0);
     $('incTotal').textContent = fmt(t) + ' EGP';
     const gap = t - planTotal();
-    $('incVs').className = 'plan-vs num' + (gap < 0 ? ' neg' : gap === 0 ? ' ok' : '');
-    $('incVs').textContent = gap === 0 ? 'Matches your plan' : gap > 0 ? `${fmt(gap)} more than your plan` : `${fmt(-gap)} less than your plan`;
+    $('incVs').className = 'plan-vs num ' + (gap < 0 ? 'neg' : gap === 0 ? 'ok' : 'good');
+    $('incVs').innerHTML = '<span>' + (gap === 0 ? 'Matches your plan exactly'
+      : gap > 0 ? `${fmt(gap)} more than your plan` : `${fmt(-gap)} short of your plan`) + '</span>';
   }
   ['incRec', 'incExtra'].forEach((id) => {
     $(id).oninput = (e) => {
