@@ -25,9 +25,6 @@ root). Then open the URL in Safari → Share → **Add to Home Screen**.
 - **Hide income**: tap the big number to turn the big number and the income line into
   dots; spending and savings stay visible. It's remembered, so the app opens hidden until
   you tap it again.
-- **Colours**: a spending category, or the Spent total, turns red as soon as it passes
-  its plan (e.g. 5,800 / 5,500). Once a month is over, the ones that stayed inside turn
-  green. Saving categories stay neutral.
 - Each month starts fresh; arrows step back through earlier months and weeks.
 
 ## Data
