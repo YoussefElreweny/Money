@@ -20,9 +20,9 @@ root). Then open the URL in Safari → Share → **Add to Home Screen**.
   like a bonus. A note shows when income and plan don't match.
 - **Week**: Sunday–Saturday spending by day and by category, against a steady pace (the
   monthly budget spread evenly over the days).
-- **Hide amounts**: the eye icon at the top hides every figure on the main screen (the
-  big number turns to dots, the rest blurs). It's remembered, so the app opens hidden
-  until you tap the eye again.
+- **Hide income**: the eye icon at the top turns the big number and the income line into
+  dots; spending and savings stay visible. It's remembered, so the app opens hidden until
+  you tap the eye again.
 - Each month starts fresh; arrows step back through earlier months and weeks.
 
 ## Data

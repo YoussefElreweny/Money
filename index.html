@@ -111,9 +111,9 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 .fab svg { width: 20px; height: 20px; }
 
 /* sheet */
-.scrim { position: fixed; inset: 0; background: rgba(17,17,19,.32); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10; }
+.scrim { position: fixed; inset: 0; background: rgba(255,255,255,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10; }
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; background: #fff; z-index: 11;
-  border-radius: 28px 28px 0 0; padding: 10px 24px calc(var(--safe-b) + 20px); max-height: 92vh; max-height: 92dvh; overflow-y: auto;
+  border-radius: 28px 28px 0 0; box-shadow: 0 -12px 48px rgba(17,17,19,.14), 0 -1px 0 rgba(17,17,19,.04); padding: 10px 24px calc(var(--safe-b) + 20px); max-height: 92vh; max-height: 92dvh; overflow-y: auto;
   transform: translateY(105%); visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s; }
 .open-sheet .scrim { opacity: 1; pointer-events: auto; }
 .open-sheet .sheet.on { transform: none; visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
@@ -172,11 +172,9 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 .links button { display: block; width: 100%; text-align: left; padding: 14px 0; font-size: 16px; color: var(--ink); }
 .links button.danger { color: var(--red); }
 
-/* hidden amounts: blur every figure on the main screen; the big ones become dots */
-.app .num { transition: filter .25s, opacity .25s; }
-.private .app .num:not(.big) { filter: blur(7px); opacity: .7; user-select: none; }
+/* hidden income: the big number and the income line turn to dots */
 .big .dots { font-size: .55em; letter-spacing: .12em; vertical-align: .18em; color: var(--ink); }
-.private .app .gap-note { filter: none; opacity: 1; }
+.sub .dots { letter-spacing: .1em; }
 
 /* mode switch */
 .mode { display: flex; width: max-content; margin: 14px auto 0; background: var(--soft); border-radius: 12px; padding: 3px; }
@@ -232,7 +230,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
       <button class="icon-btn" id="next" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     <div style="display:flex;gap:2px">
-    <button class="icon-btn" id="eye" aria-label="Hide amounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg></button>
+    <button class="icon-btn" id="eye" aria-label="Hide income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg></button>
     <button class="icon-btn" id="openSettings" aria-label="Plan & settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
     </div>
   </header>
@@ -458,7 +456,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
   function applyHidden() {
     document.body.classList.toggle('private', hidden);
     $('eye').querySelector('svg').innerHTML = hidden ? '<path d="M10.6 5.1A10.6 10.6 0 0112 5c6.4 0 10 7 10 7a17.7 17.7 0 01-2.6 3.6M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>' : '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
-    $('eye').setAttribute('aria-label', hidden ? 'Show amounts' : 'Hide amounts');
+    $('eye').setAttribute('aria-label', hidden ? 'Show income' : 'Hide income');
   }
   $('eye').onclick = () => {
     hidden = !hidden;
@@ -494,7 +492,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     $('next').disabled = viewMonth >= monthOf(todayKey());
     $('left').className = 'big num' + (left < 0 ? ' neg' : '');
     $('left').innerHTML = hidden ? `<span class="dots">••••••</span><small>EGP</small>` : `${left < 0 ? '−' : ''}${fmt(Math.abs(left))}<small>EGP</small>`;
-    $('ofSalary').textContent = `of ${fmt(total)} EGP income`;
+    $('ofSalary').innerHTML = hidden ? 'of <span class="dots">••••••</span> EGP income' : `of ${fmt(total)} EGP income`;
     const gn = $('gapNote');
     gn.hidden = Math.round(gap) === 0;
     gn.className = 'gap-note num' + (gap < 0 ? ' neg' : '');
@@ -556,7 +554,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     const pace = (g) => days.reduce((a, d) => a + groupTotal(g) / daysInMonth(d), 0);
     const totalPace = spendGroups.reduce((a, g) => a + pace(g), 0);
     const spent = tx.reduce((a, t) => a + t.amount, 0);
-    $('wkSpent').innerHTML = hidden ? `<span class="dots">••••••</span><small>EGP</small>` : `${fmt(spent)}<small>EGP</small>`;
+    $('wkSpent').innerHTML = `${fmt(spent)}<small>EGP</small>`;
     const diff = totalPace - spent;
     $('wkStatus').innerHTML = `Steady pace ${fmt(totalPace)} · ` +
       (diff >= 0 ? `${fmt(diff)} under` : `<span class="neg">${fmt(-diff)} over</span>`);
@@ -703,7 +701,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     persist();
     viewMonth = monthOf(rec.date); viewWeek = weekStartOf(rec.date);
     closeSheet(); render();
-    toast(i >= 0 ? 'Updated' : hidden ? 'Saved' : `Saved · ${fmt(amount)} EGP`);
+    toast(i >= 0 ? 'Updated' : `Saved · ${fmt(amount)} EGP`);
   };
   $('del').onclick = () => {
     if (!confirm('Delete this expense?')) return;
