@@ -172,6 +172,12 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 .links button { display: block; width: 100%; text-align: left; padding: 14px 0; font-size: 16px; color: var(--ink); }
 .links button.danger { color: var(--red); }
 
+/* hidden amounts: blur every figure on the main screen; the big ones become dots */
+.app .num { transition: filter .25s, opacity .25s; }
+.private .app .num:not(.big) { filter: blur(7px); opacity: .7; user-select: none; }
+.big .dots { font-size: .55em; letter-spacing: .12em; vertical-align: .18em; color: var(--ink); }
+.private .app .gap-note { filter: none; opacity: 1; }
+
 /* mode switch */
 .mode { display: flex; width: max-content; margin: 14px auto 0; background: var(--soft); border-radius: 12px; padding: 3px; }
 .mode button { padding: 7px 22px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
@@ -225,7 +231,10 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
       <span id="monthLabel"></span>
       <button class="icon-btn" id="next" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
+    <div style="display:flex;gap:2px">
+    <button class="icon-btn" id="eye" aria-label="Hide amounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg></button>
     <button class="icon-btn" id="openSettings" aria-label="Plan & settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+    </div>
   </header>
   <div class="mode" id="mode"><button data-mode="month">Month</button><button data-mode="week">Week</button></div>
 
@@ -443,7 +452,22 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
   // ── render ───────────────────────────────────────────────
   const openCats = new Set();
 
+  // hide amounts (like a banking app); remembered on this device
+  let hidden = false;
+  try { hidden = localStorage.getItem('salary.hidden') === '1'; } catch (e) {}
+  function applyHidden() {
+    document.body.classList.toggle('private', hidden);
+    $('eye').querySelector('svg').innerHTML = hidden ? '<path d="M10.6 5.1A10.6 10.6 0 0112 5c6.4 0 10 7 10 7a17.7 17.7 0 01-2.6 3.6M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>' : '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+    $('eye').setAttribute('aria-label', hidden ? 'Show amounts' : 'Hide amounts');
+  }
+  $('eye').onclick = () => {
+    hidden = !hidden;
+    try { localStorage.setItem('salary.hidden', hidden ? '1' : '0'); } catch (e) {}
+    applyHidden(); render();
+  };
+
   function render() {
+    applyHidden();
     document.querySelectorAll('#mode button').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
     $('monthView').hidden = mode !== 'month';
     $('weekView').hidden = mode !== 'week';
@@ -469,12 +493,14 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     $('monthLabel').textContent = monthName(viewMonth);
     $('next').disabled = viewMonth >= monthOf(todayKey());
     $('left').className = 'big num' + (left < 0 ? ' neg' : '');
-    $('left').innerHTML = `${left < 0 ? '−' : ''}${fmt(Math.abs(left))}<small>EGP</small>`;
+    $('left').innerHTML = hidden ? `<span class="dots">••••••</span><small>EGP</small>` : `${left < 0 ? '−' : ''}${fmt(Math.abs(left))}<small>EGP</small>`;
     $('ofSalary').textContent = `of ${fmt(total)} EGP income`;
     const gn = $('gapNote');
     gn.hidden = Math.round(gap) === 0;
     gn.className = 'gap-note num' + (gap < 0 ? ' neg' : '');
-    gn.textContent = gap > 0 ? `${fmt(gap)} not in your plan yet ›` : `Plan is ${fmt(-gap)} more than your income ›`;
+    gn.textContent = hidden
+      ? (gap > 0 ? 'Some income isn’t in your plan yet ›' : 'Your plan is more than your income ›')
+      : gap > 0 ? `${fmt(gap)} not in your plan yet ›` : `Plan is ${fmt(-gap)} more than your income ›`;
     $('spent').innerHTML = `${fmt(spent)} <span>/ ${fmt(spendBudget)}</span>`;
     $('saved').innerHTML = `${fmt(saved)} <span>/ ${fmt(saveBudget)}</span>`;
 
@@ -530,7 +556,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     const pace = (g) => days.reduce((a, d) => a + groupTotal(g) / daysInMonth(d), 0);
     const totalPace = spendGroups.reduce((a, g) => a + pace(g), 0);
     const spent = tx.reduce((a, t) => a + t.amount, 0);
-    $('wkSpent').innerHTML = `${fmt(spent)}<small>EGP</small>`;
+    $('wkSpent').innerHTML = hidden ? `<span class="dots">••••••</span><small>EGP</small>` : `${fmt(spent)}<small>EGP</small>`;
     const diff = totalPace - spent;
     $('wkStatus').innerHTML = `Steady pace ${fmt(totalPace)} · ` +
       (diff >= 0 ? `${fmt(diff)} under` : `<span class="neg">${fmt(-diff)} over</span>`);
@@ -550,7 +576,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     $('wkDays').innerHTML = days.map((d) => {
       const dt = fromKey(d);
       const cls = d === today ? 'today' : d > today ? 'future' : '';
-      return `<div class="${cls}">${dt.toLocaleDateString('en-US', { weekday: 'narrow' })}<b class="num">${dt.getDate()}</b></div>`;
+      return `<div class="${cls}">${dt.toLocaleDateString('en-US', { weekday: 'narrow' })}<b>${dt.getDate()}</b></div>`;
     }).join('');
 
     $('wkCats').innerHTML = spendGroups.map((g) => {
@@ -677,7 +703,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     persist();
     viewMonth = monthOf(rec.date); viewWeek = weekStartOf(rec.date);
     closeSheet(); render();
-    toast(i >= 0 ? 'Updated' : `Saved · ${fmt(amount)} EGP`);
+    toast(i >= 0 ? 'Updated' : hidden ? 'Saved' : `Saved · ${fmt(amount)} EGP`);
   };
   $('del').onclick = () => {
     if (!confirm('Delete this expense?')) return;
