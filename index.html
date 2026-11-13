@@ -110,7 +110,7 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 
 /* sheet */
 .scrim { position: fixed; inset: 0; background: rgba(255,255,255,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10; }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; background: #fff; z-index: 11;
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; background: #fff; z-index: 11; overscroll-behavior: contain;
   border-radius: 28px 28px 0 0; box-shadow: 0 -12px 48px rgba(17,17,19,.14), 0 -1px 0 rgba(17,17,19,.04); padding: 10px 24px calc(var(--safe-b) + 20px); max-height: 92vh; max-height: 92dvh; overflow-y: auto;
   transform: translateY(105%); visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s; }
 .open-sheet .scrim { opacity: 1; pointer-events: auto; }
@@ -648,6 +648,48 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     activeSheet = null;
   }
   $('scrim').onclick = closeSheet;
+
+  // swipe a sheet down to close it (only once it's scrolled to the top)
+  document.querySelectorAll('.sheet').forEach((sheet) => {
+    let d = null;
+    const scrim = $('scrim');
+    const reset = () => { sheet.style.transition = ''; sheet.style.transform = ''; scrim.style.transition = ''; scrim.style.opacity = ''; };
+    sheet.addEventListener('touchstart', (e) => {
+      if (!sheet.classList.contains('on') || e.touches.length > 1) return;
+      d = { y0: e.touches[0].clientY, y: e.touches[0].clientY, t0: Date.now(), active: false };
+    }, { passive: true });
+    sheet.addEventListener('touchmove', (e) => {
+      if (!d) return;
+      d.y = e.touches[0].clientY;
+      const dy = d.y - d.y0;
+      if (!d.active) {
+        if (dy > 6 && sheet.scrollTop <= 0) {
+          d.active = true;
+          sheet.style.transition = 'none'; scrim.style.transition = 'none';
+          if (document.activeElement && sheet.contains(document.activeElement)) document.activeElement.blur();
+        } else if (dy < -6 || sheet.scrollTop > 0) { d = null; }
+        return;
+      }
+      e.preventDefault();
+      const pull = Math.max(0, d.y - d.y0);
+      sheet.style.transform = `translateY(${pull}px)`;
+      scrim.style.opacity = String(Math.max(0, 1 - pull / sheet.offsetHeight));
+    }, { passive: false });
+    const end = () => {
+      if (!d) return;
+      const was = d; d = null;
+      if (!was.active) return;
+      const pull = Math.max(0, was.y - was.y0);
+      const speed = pull / Math.max(1, Date.now() - was.t0); // px per ms
+      if (pull > Math.min(140, sheet.offsetHeight * 0.25) || (speed > 0.35 && pull > 40)) {
+        reset(); closeSheet();
+      } else {
+        reset();
+      }
+    };
+    sheet.addEventListener('touchend', end);
+    sheet.addEventListener('touchcancel', end);
+  });
   document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeSheet));
 
   // add / edit

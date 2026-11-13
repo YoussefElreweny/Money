@@ -25,6 +25,8 @@ root). Then open the URL in Safari → Share → **Add to Home Screen**.
 - **Hide income**: tap the big number to turn the big number and the income line into
   dots; spending and savings stay visible. It's remembered, so the app opens hidden until
   you tap it again.
+- **Sheets** (Plan, Income, Add expense) close with the × or by swiping them down from
+  the top; a short drag springs back.
 - Each month starts fresh; arrows step back through earlier months and weeks.
 
 ## Data
