@@ -22,9 +22,12 @@ root). Then open the URL in Safari → Share → **Add to Home Screen**.
   like a bonus. A note shows when income and plan don't match.
 - **Week**: Sunday–Saturday spending by day and by category, against a steady pace (the
   monthly budget spread evenly over the days).
-- **Hide income**: tap the big number (or the eye icon at the top) to turn the big number and the income line into
+- **Hide income**: tap the big number to turn the big number and the income line into
   dots; spending and savings stay visible. It's remembered, so the app opens hidden until
-  you tap the eye again.
+  you tap it again.
+- **Colours**: a spending category, or the Spent total, turns red as soon as it passes
+  its plan (e.g. 5,800 / 5,500). Once a month is over, the ones that stayed inside turn
+  green. Saving categories stay neutral.
 - Each month starts fresh; arrows step back through earlier months and weeks.
 
 ## Data

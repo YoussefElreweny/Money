@@ -40,7 +40,7 @@ input { font: inherit; color: inherit; }
 .app { max-width: 520px; margin: 0 auto; padding: calc(var(--safe-t) + 20px) 24px calc(var(--safe-b) + 120px); }
 
 /* header */
-.top { display: flex; align-items: center; justify-content: space-between; height: 44px; }
+.top { display: flex; align-items: center; justify-content: center; height: 44px; }
 .month { display: flex; align-items: center; gap: 4px; }
 .month span { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; min-width: 132px; text-align: center; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-2); }
@@ -77,7 +77,8 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
 .cat .name { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .cat .left { font-size: 17px; font-weight: 600; }
-.cat .left.neg { color: var(--red); }
+.cat .left.neg, .totals .v.neg { color: var(--red); }
+.cat .left.good, .totals .v.good { color: #1d8a5a; }
 .cat .meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-3); margin-top: 10px; }
 .bar { height: 4px; border-radius: 99px; background: var(--soft); margin-top: 12px; overflow: hidden; }
 .bar b { display: block; height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
@@ -245,7 +246,6 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
       <span id="monthLabel"></span>
       <button class="icon-btn" id="next" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
-    <button class="icon-btn" id="eye" aria-label="Hide income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg></button>
   </header>
   <div class="mode" id="mode"><button data-mode="month">Month</button><button data-mode="week">Week</button></div>
 
@@ -470,8 +470,6 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
   try { hidden = localStorage.getItem('salary.hidden') === '1'; } catch (e) {}
   function applyHidden() {
     document.body.classList.toggle('private', hidden);
-    $('eye').querySelector('svg').innerHTML = hidden ? '<path d="M10.6 5.1A10.6 10.6 0 0112 5c6.4 0 10 7 10 7a17.7 17.7 0 01-2.6 3.6M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>' : '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
-    $('eye').setAttribute('aria-label', hidden ? 'Show income' : 'Hide income');
   }
   function toggleHidden() {
     hidden = !hidden;
@@ -479,7 +477,6 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     applyHidden(); render();
     const big = $('left'); big.classList.remove('flip'); void big.offsetWidth; big.classList.add('flip');
   }
-  $('eye').onclick = toggleHidden;
   $('toggleHide').onclick = toggleHidden;
 
   function render() {
@@ -517,6 +514,10 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     gn.textContent = hidden
       ? (gap > 0 ? 'Some income isn’t in your plan yet ›' : 'Your plan is more than your income ›')
       : gap > 0 ? `${fmt(gap)} not in your plan yet ›` : `Plan is ${fmt(-gap)} more than your income ›`;
+    // red the moment spending passes the plan; green only once the month is over and it stayed inside
+    const monthDone = viewMonth < monthOf(todayKey());
+    const status = (used, budget) => used > budget ? 'neg' : monthDone ? 'good' : '';
+    $('spent').className = 'v num ' + status(spent, spendBudget);
     $('spent').innerHTML = `${fmt(spent)} <span>/ ${fmt(spendBudget)}</span>`;
     $('saved').innerHTML = `${fmt(saved)} <span>/ ${fmt(saveBudget)}</span>`;
 
@@ -529,8 +530,11 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
     $('cats').innerHTML = state.plan.map((g) => {
       const b = groupTotal(g); const u = usedGroup[g.id] || 0; const l = b - u;
       const p = b ? Math.min(100, (u / b) * 100) : 0;
-      const verb = g.kind === 'save' ? 'to go' : 'left';
-      const leftTxt = l < 0 ? `${fmt(-l)} over` : `${fmt(l)} ${verb}`;
+      const save = g.kind === 'save';
+      const st = save ? '' : status(u, b);
+      // saving more than planned is good news, not an overspend
+      const leftTxt = save ? (l < 0 ? `${fmt(-l)} extra` : `${fmt(l)} to go`)
+        : l < 0 ? `${fmt(-l)} over` : monthDone ? `${fmt(l)} under` : `${fmt(l)} left`;
       const items = g.items.map((i) => {
         const iu = usedItem[g.id + '/' + i.id] || 0; const il = i.amount - iu;
         return `<div class="item"><span class="n">${esc(i.name)}</span><span class="a num"><strong class="${il < 0 ? 'neg' : ''}">${il < 0 ? '−' : ''}${fmt(Math.abs(il))}</strong> / ${fmt(i.amount)}</span></div>`;
@@ -539,9 +543,9 @@ h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: v
         <button>
           <div class="row">
             <span class="name"><span class="dot" style="background:${g.color}"></span>${esc(g.name)}</span>
-            <span class="left num${l < 0 ? ' neg' : ''}">${leftTxt}</span>
+            <span class="left num ${st}">${leftTxt}</span>
           </div>
-          <div class="bar"><b style="width:${p}%;background:${g.color}"></b></div>
+          <div class="bar"><b style="width:${p}%;background:${st === 'neg' ? 'var(--red)' : g.color}"></b></div>
           <div class="meta num"><span>${fmt(u)} of ${fmt(b)}</span>
             <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
         </button>
